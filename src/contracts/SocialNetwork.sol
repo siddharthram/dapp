@@ -11,14 +11,21 @@ contract SocialNetwork {
         uint id;
         string content;
         uint tipAmount;
-        address author;// ethereum address
+        address payable author;// ethereum address
     }
-
+// event for creation
     event PostCreated(
         uint id,
         string content,
         uint tipAmount,
-        address author
+        address payable author
+    );
+// event for tipping post
+    event PostTipped(
+        uint id,
+        string content,
+        uint tipAmount,
+        address payable author
     );
 
     constructor() public  {
@@ -33,15 +40,43 @@ contract SocialNetwork {
 
     function createPost(string memory _content) public {
 
+        // check if conditions are met
         // if this returns false, the function will not continue!
         require(bytes(_content).length > 0);
+        // if it evaluates to false, gas is refunded
+        postCount++;   
 
         //msg is a global made available
-       posts[postCount]=  Post(postCount,_content,0, msg.sender);
-        postCount++;              
+       Post memory p = Post(postCount,_content,0, msg.sender);
+       posts[postCount]=  p;
+
+        // send an even to anyone interested           
         emit PostCreated(postCount, _content, 0, msg.sender);
 
     }
 
+// to create a function in solidity that accepts ether
+// it needs to be tagged as payable
 
+    function tipPost(uint _id) public payable{
+        
+        //require(_id > 0 && _id <= postCount);
+        //Fetch the post
+        Post memory _post = posts[_id];
+
+       // Fetch the owner of the post (author)
+       address payable _author = _post.author;
+
+        // pay the author
+        address(_author).transfer(msg.value);
+
+       // increment the tip amount
+       // The amount is in the metadata (same as sender)
+
+       _post.tipAmount +=  msg.value;
+
+       // update the post
+        posts[_id] = _post;
+        emit PostTipped(postCount, _post.content, _post.tipAmount, _author);
+    }
 }
