@@ -70,12 +70,32 @@ contract('SocialNetwork',([deployer, author, tipper]) => {
                 // values tippedmust be in wei, not ether
                 // no floating point on the blockchain.
                 //use the web3 lib to convert ether to wei
+                
+                let oldAuthorBalance;
+                oldAuthorBalance = await web3.eth.getBalance(author);
+                oldAuthorBalance = new web3.utils.BN(oldAuthorBalance);
+
                 result = await socialNetwork.tipPost(postCount, { from: tipper, value: web3.utils.toWei('1', 'Ether')});
                 //console.log(result);
                 const event = result.logs[0].args;
                 assert.equal(event.id.toNumber(), postCount.toNumber(), 'id is correct');
                 assert.equal(event.tipAmount, '1000000000000000000', 'tip amount ok');
                 assert.equal(event.author, author, 'author ok');
+
+                let newAuthorBalance;
+                newAuthorBalance = await web3.eth.getBalance(author);
+                newAuthorBalance = new web3.utils.BN(newAuthorBalance);
+
+                let tipAmount;
+                tipAmount = web3.utils.toWei('1', 'Ether');
+                tipAmount = new web3.utils.BN(tipAmount);
+
+                const expectedBalance = oldAuthorBalance.add(tipAmount);
+
+                assert.equal(newAuthorBalance.toString(), expectedBalance.toString());
+
+                //Failure: tip post that does not exist
+                await socialNetwork.tipPost(568, {from: tipper, value: web3.utils.toWei('1', 'Ether')}).should.be.rejected;
             })
         })
     })

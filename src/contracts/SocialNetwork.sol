@@ -60,7 +60,9 @@ contract SocialNetwork {
 
     function tipPost(uint _id) public payable{
         
-        //require(_id > 0 && _id <= postCount);
+        // will return false and exit if not true
+        require(_id > 0 && _id <= postCount);
+        
         //Fetch the post
         Post memory _post = posts[_id];
 
